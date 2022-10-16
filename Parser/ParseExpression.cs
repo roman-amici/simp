@@ -63,7 +63,7 @@ namespace Simp.Parser
         {
             var left = Comparison();
 
-            while (Match(TokenType.EqualEqual))
+            while (Match(TokenType.EqualEqual, TokenType.BangEqual))
             {
                 var op = Previous();
                 left = new Binary(left.SourceStart, left, Comparison(), op);

@@ -10,6 +10,15 @@ namespace Simp.CodeGeneration
         IList<string> BSS { get; set; }
         IList<string> Text { get; set; }
 
+        int Label { get; set; } = 0;
+
+        string NextLabel()
+        {
+            var s = $"l{Label}";
+            Label++;
+            return s;
+        }
+
         public ASMGenerator(string filePath)
         {
             FilePath = filePath;
