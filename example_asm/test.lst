@@ -1,0 +1,15 @@
+     1                                  section .data
+     2                                  section .bss
+     3                                  section .text
+     4                                  	 global main
+     5                                  main:
+     6 00000000 6A14                    push 20
+     7 00000002 6A04                    push 4
+     8 00000004 5B                      pop rbx
+     9 00000005 58                      pop rax
+    10 00000006 4831D2                  xor rdx, rdx
+    11 00000009 48F7FB                  idiv rbx
+    12 0000000C 50                      push rax
+    13 0000000D B83C000000              mov rax, 60
+    14 00000012 5F                      pop rdi
+    15 00000013 0F05                    syscall

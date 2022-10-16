@@ -1,0 +1,5 @@
+function f(x)
+{
+    let y = 3;
+    print x + y;
+}
