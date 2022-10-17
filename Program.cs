@@ -24,7 +24,7 @@ if (scanner.IsValid)
     if (parser.IsValid)
     {
         var generator = new ASMGenerator($"example_asm/test.asm");
-        generator.GenStatements(statements);
+        generator.GenFunction(statements);
         generator.Save();
     }
 }

@@ -9,12 +9,12 @@ namespace Simp.AST
 
     public class LetStatement : Statement
     {
-        public Variable Target { get; private set; }
+        public Name Target { get; private set; }
         public ExpressionNode Initializer { get; private set; }
 
         public LetStatement(
             Token sourceStart,
-            Variable target,
+            Name target,
             ExpressionNode initializer)
             : base(sourceStart)
         {
@@ -111,13 +111,13 @@ namespace Simp.AST
 
     public class IfStatement : Statement
     {
-        public ExpressionNode Predicate { get; private set; }
+        public ExpressionNode? Predicate { get; private set; }
         public BlockStatement ThenBlock { get; private set; }
         public IfStatement? ElseStatement { get; private set; }
 
         public IfStatement(
             Token sourceStart,
-            ExpressionNode predicate,
+            ExpressionNode? predicate,
             BlockStatement thenBlock,
             IfStatement? elseStatement
         ) : base(sourceStart)

@@ -1,1 +1,6 @@
-exit 0 || 0 || 0 || 1;
+let x = 2;
+{
+    let x = 1;
+    exit x;
+}
+exit x;

@@ -1,4 +1,5 @@
 using Simp.AST;
+using Simp.StaticAnalysis;
 
 namespace Simp.CodeGeneration
 {
@@ -10,7 +11,11 @@ namespace Simp.CodeGeneration
         IList<string> BSS { get; set; }
         IList<string> Text { get; set; }
 
+        IList<string> CurrentFunction { get; set; }
+
         int Label { get; set; } = 0;
+
+        Resolver Resolver { get; set; }
 
         string NextLabel()
         {
@@ -25,6 +30,37 @@ namespace Simp.CodeGeneration
             SetupData();
             SetupBSS();
             SetupText();
+        }
+
+        void EnterFunction()
+        {
+            CurrentFunction = new List<string>();
+            Resolver = new Resolver();
+        }
+
+        void ExitFunction()
+        {
+            var offset = Resolver.MaxSlots * 8;
+
+            // Function preamble
+            Text.Add("push rbp");
+            Text.Add("mov rbp, rsp");
+            Text.Add($"sub rsp, ${offset}");
+
+            foreach (var line in CurrentFunction)
+            {
+                Text.Add(line);
+            }
+
+            // TODO: ret;
+        }
+
+        public void GenFunction(IList<Statement> statements)
+        {
+            // TODO: named function, arguments etc;
+            EnterFunction();
+            GenStatements(statements);
+            ExitFunction();
         }
 
         void SetupData()

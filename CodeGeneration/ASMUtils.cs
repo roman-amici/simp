@@ -14,5 +14,10 @@ namespace Simp.CodeGeneration
             Text.Add($"{set} dl");
             Text.Add("push rdx");
         }
+
+        void Add(string value)
+        {
+            CurrentFunction.Add(value);
+        }
     }
 }

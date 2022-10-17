@@ -18,6 +18,9 @@ namespace Simp.CodeGeneration
                 case Binary b:
                     GenBinary(b);
                     break;
+                case Variable v:
+                    GenVariable(v);
+                    break;
             }
         }
 
@@ -27,16 +30,16 @@ namespace Simp.CodeGeneration
             switch (u.Operator.Type)
             {
                 case TokenType.Minus:
-                    Text.Add("pop rax");
-                    Text.Add("neg rax");
-                    Text.Add("push rax");
+                    Add("pop rax");
+                    Add("neg rax");
+                    Add("push rax");
                     break;
                 case TokenType.Bang:
-                    Text.Add("pop rax");
-                    Text.Add("xor rbx, rbx");
-                    Text.Add("cmp rax, 0");
-                    Text.Add("setz bl");
-                    Text.Add("push rbx");
+                    Add("pop rax");
+                    Add("xor rbx, rbx");
+                    Add("cmp rax, 0");
+                    Add("setz bl");
+                    Add("push rbx");
                     break;
                 default:
                     throw new TokenError("Unexpected operator", u.Operator);
@@ -55,27 +58,27 @@ namespace Simp.CodeGeneration
             GenExpression(b.Left);
             GenExpression(b.Right);
 
-            Text.Add("pop rbx");
-            Text.Add("pop rax");
+            Add("pop rbx");
+            Add("pop rax");
 
             switch (b.Operator.Type)
             {
                 case TokenType.Plus:
-                    Text.Add("add rax, rbx");
-                    Text.Add("push rax");
+                    Add("add rax, rbx");
+                    Add("push rax");
                     break;
                 case TokenType.Minus:
-                    Text.Add("sub rax, rbx");
-                    Text.Add("push rax");
+                    Add("sub rax, rbx");
+                    Add("push rax");
                     break;
                 case TokenType.Star:
-                    Text.Add("imul rax, rbx");
-                    Text.Add("push rax");
+                    Add("imul rax, rbx");
+                    Add("push rax");
                     break;
                 case TokenType.Slash:
                     Clear("rdx");
-                    Text.Add("idiv rbx"); // divide by rbx
-                    Text.Add("push rax");
+                    Add("idiv rbx"); // divide by rbx
+                    Add("push rax");
                     break;
                 case TokenType.EqualEqual:
                     SetCompare("setz");
@@ -105,30 +108,43 @@ namespace Simp.CodeGeneration
             GenExpression(b.Left);
             var skipLabel = NextLabel();
 
-            Text.Add("mov rax, [rsp]");
-            Text.Add("cmp rax, 0");
+            Add("mov rax, [rsp]");
+            Add("cmp rax, 0");
 
             if (b.Operator.Type == TokenType.AmpAmp)
             {
-                Text.Add($"je {skipLabel}");
+                Add($"je {skipLabel}");
             }
             else if (b.Operator.Type == TokenType.BarBar)
             {
-                Text.Add($"jne {skipLabel}");
+                Add($"jne {skipLabel}");
             }
 
             // Fall through to expression 2
             // Remove the old value from the stack since its irrelevant if we fall through;
-            Text.Add("pop rax");
+            Add("pop rax");
 
             GenExpression(b.Right);
-            Text.Add($"{skipLabel}:");
+            Add($"{skipLabel}:");
 
         }
 
         void GenInt(IntLiteral l)
         {
-            Text.Add($"push {l.Value}");
+            Add($"push {l.Value}");
+        }
+
+        void GenVariable(Variable v)
+        {
+            var slot = Resolver.FindSlot(v.Name.QualifiedName);
+            if (slot == null)
+            {
+                throw new TokenError($"Reference to undeclared variable '{v.Name.QualifiedName}'", v.SourceStart);
+            }
+
+            var offset = slot * 8;
+            Add($"mov rax, [rbp-{offset}]");
+            Add($"push rax");
         }
     }
 }
