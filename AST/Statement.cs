@@ -89,14 +89,14 @@ namespace Simp.AST
 
     public class ForStatement : Statement
     {
-        public LetStatement Initializer { get; private set; }
+        public Statement Initializer { get; private set; }
         public ExpressionNode Predicate { get; private set; }
         public ExpressionNode Update { get; private set; }
         public BlockStatement Block { get; private set; }
 
         public ForStatement(
             Token sourceStart,
-            LetStatement initializer,
+            Statement initializer,
             ExpressionNode predicate,
             ExpressionNode update,
             BlockStatement block

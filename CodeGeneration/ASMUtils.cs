@@ -4,20 +4,25 @@ namespace Simp.CodeGeneration
     {
         void Clear(string reg)
         {
-            Text.Add($"xor {reg},{reg}");
+            Add($"xor {reg},{reg}");
         }
 
         void SetCompare(string set)
         {
             Clear("rdx");
-            Text.Add("cmp rax, rbx");
-            Text.Add($"{set} dl");
-            Text.Add("push rdx");
+            Add("cmp rax, rbx");
+            Add($"{set} dl");
+            Add("push rdx");
         }
 
         void Add(string value)
         {
             CurrentFunction.Add(value);
+        }
+
+        void AddLabel(string value)
+        {
+            Add($"{value}:");
         }
     }
 }

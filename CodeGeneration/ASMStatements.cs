@@ -19,12 +19,10 @@ namespace Simp.CodeGeneration
             {
                 case ExpressionStatement e:
                     GenExpression(e.Expr);
+                    Add("pop rax"); // Keep the stack normalized
                     break;
                 case ExitStatement ex:
-                    GenExpression(ex.Expr);
-                    Add("mov rax, 60"); // Exit syscall code
-                    Add("pop rdi");
-                    Add("syscall");
+                    GenExitStatement(ex);
                     break;
                 case BlockStatement b:
                     GenBlockStatement(b);
@@ -35,7 +33,21 @@ namespace Simp.CodeGeneration
                 case LetStatement l:
                     GenLetStatement(l);
                     break;
+                case WhileStatement w:
+                    GenWhileStatement(w);
+                    break;
+                case ForStatement f:
+                    GenForStatement(f);
+                    break;
             }
+        }
+
+        void GenExitStatement(ExitStatement ex)
+        {
+            GenExpression(ex.Expr);
+            Add("mov rax, 60"); // Exit syscall code
+            Add("pop rdi");
+            Add("syscall");
         }
 
         void GenBlockStatement(BlockStatement b)
@@ -88,6 +100,40 @@ namespace Simp.CodeGeneration
 
             var offset = slot * 8;
             Add($"mov [rbp-{offset}], rax");
+        }
+
+        void GenWhileStatement(WhileStatement w)
+        {
+            var predicateStart = NextLabel();
+            var whileEnd = NextLabel();
+
+            AddLabel(predicateStart);
+            GenExpression(w.Predicate);
+            Add("pop rax");
+            Add("cmp rax, 0");
+            Add($"je {whileEnd}");
+            GenBlockStatement(w.Block);
+            Add($"jmp {predicateStart}");
+            AddLabel(whileEnd);
+        }
+
+        void GenForStatement(ForStatement f)
+        {
+            var predicateStart = NextLabel();
+            var forEnd = NextLabel();
+
+            Resolver.EnterScope();
+            GenStatement(f.Initializer);
+            AddLabel(predicateStart);
+            GenExpression(f.Predicate);
+            Add("pop rax");
+            Add("cmp rax, 0");
+            Add($"je {forEnd}");
+            GenBlockStatement(f.Block);
+            GenExpression(f.Update);
+            Add($"jmp {predicateStart}");
+            Resolver.ExitScope();
+            AddLabel(forEnd);
         }
     }
 }

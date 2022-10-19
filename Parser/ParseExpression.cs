@@ -124,7 +124,8 @@ namespace Simp.Parser
             if (Match(
                 TokenType.Bang,
                 TokenType.Minus,
-                TokenType.At))
+                TokenType.At,
+                TokenType.Amp))
             {
                 var op = Previous();
                 return new Unary(op, Unary(), op);
@@ -159,7 +160,7 @@ namespace Simp.Parser
 
         public Call FunctionCall(ExpressionNode callee)
         {
-            var callStart = Previous();
+            var callStart = Consume(TokenType.LeftParen, "Expected '('");
 
             var argumentList = new List<ExpressionNode>();
             if (!Check(TokenType.RightParen))
@@ -176,10 +177,10 @@ namespace Simp.Parser
 
         public ArrayIndex ArrayIndex(ExpressionNode callee)
         {
-            var indexStart = Previous();
+            var indexStart = Consume(TokenType.LeftBrace, "Expected '['");
             var expr = Expr();
 
-            Consume(TokenType.RightParen, "Expected ')' after arguments");
+            Consume(TokenType.RightBracket, "Expected ']' after expression");
             return new ArrayIndex(indexStart, callee, expr);
         }
 

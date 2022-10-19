@@ -1,6 +1,3 @@
-let x = 2;
-{
-    let x = 1;
-    exit x;
-}
-exit x;
+let x = 0;
+let y = &x;
+exit x - &y;

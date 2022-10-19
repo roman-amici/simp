@@ -21,6 +21,9 @@ namespace Simp.CodeGeneration
                 case Variable v:
                     GenVariable(v);
                     break;
+                case Assign a:
+                    GenAssign(a);
+                    break;
             }
         }
 
@@ -40,6 +43,9 @@ namespace Simp.CodeGeneration
                     Add("cmp rax, 0");
                     Add("setz bl");
                     Add("push rbx");
+                    break;
+                case TokenType.Amp:
+                    GenAddress(u.Expr);
                     break;
                 default:
                     throw new TokenError("Unexpected operator", u.Operator);
@@ -145,6 +151,41 @@ namespace Simp.CodeGeneration
             var offset = slot * 8;
             Add($"mov rax, [rbp-{offset}]");
             Add($"push rax");
+        }
+
+        void GenAssign(Assign a)
+        {
+            var variable = a.Target as Variable;
+            var slot = Resolver.FindSlot(variable.Name.QualifiedName);
+            if (slot == null)
+            {
+                throw new TokenError($"Assignment to undeclared variable '{variable.Name.QualifiedName}'", a.SourceStart);
+            }
+
+            var offset = slot * 8;
+            GenExpression(a.Value);
+            Add("mov rax, [rsp]");
+            Add($"mov [rbp-{offset}], rax");
+        }
+
+        void GenAddress(ExpressionNode e)
+        {
+            if (e is Variable v)
+            {
+                var slot = Resolver.FindSlot(v.Name.QualifiedName);
+                if (slot == null)
+                {
+                    throw new TokenError($"Reference to undeclared variable '{v.Name.QualifiedName}'", v.SourceStart);
+                }
+
+                var offset = slot * 8;
+                Add($"lea rax, [ebp-{offset}]");
+                Add("push rax");
+            }
+            else
+            {
+                throw new TokenError("Can't take reference to expression.", e.SourceStart);
+            }
         }
     }
 }

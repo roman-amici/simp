@@ -13,6 +13,8 @@ namespace Simp.Parser
                 TokenType.If => IfStatement(),
                 TokenType.LeftBrace => BlockStatement(),
                 TokenType.Let => LetStatement(),
+                TokenType.While => WhileStatement(),
+                TokenType.For => ForStatement(),
                 _ => ExpressionStatement()
             };
         }
@@ -86,6 +88,47 @@ namespace Simp.Parser
             Consume(TokenType.Semicolon, "Expected ';'.");
 
             return new LetStatement(letToken, new Name(name.Literal), initializer);
+        }
+
+        public WhileStatement WhileStatement()
+        {
+            var whileToken = Consume(TokenType.While, "Expected 'while'.");
+            Consume(TokenType.LeftParen, "Expected '(' after 'while'.");
+
+            var predicate = Expr();
+
+            Consume(TokenType.RightParen, "Expected ')'.");
+
+            var block = BlockStatement();
+
+            return new WhileStatement(
+                whileToken,
+                predicate,
+                block);
+        }
+
+        public ForStatement ForStatement()
+        {
+            var forToken = Consume(TokenType.For, "Expected 'for'.");
+
+            Consume(TokenType.LeftParen, "Expected '(' after 'for'.");
+
+            var initializer = ParseStatement();
+            var predicate = Expr();
+            Consume(TokenType.Semicolon, "Expected ';'");
+            var update = Expr();
+
+            Consume(TokenType.RightParen, "Expected ')'");
+
+            var block = BlockStatement();
+
+            return new ForStatement(
+                forToken,
+                initializer,
+                predicate,
+                update,
+                block
+            );
         }
     }
 
