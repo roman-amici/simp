@@ -177,7 +177,7 @@ namespace Simp.Parser
 
         public ArrayIndex ArrayIndex(ExpressionNode callee)
         {
-            var indexStart = Consume(TokenType.LeftBrace, "Expected '['");
+            var indexStart = Consume(TokenType.LeftBracket, "Expected '['");
             var expr = Expr();
 
             Consume(TokenType.RightBracket, "Expected ']' after expression");

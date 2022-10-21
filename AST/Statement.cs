@@ -23,6 +23,22 @@ namespace Simp.AST
         }
     }
 
+    public class ArrayDeclaration : Statement
+    {
+        public Name Target { get; private set; }
+        public int Size { get; private set; }
+
+        public ArrayDeclaration(
+            Token sourceStart,
+            Name target,
+            int size)
+            : base(sourceStart)
+        {
+            Target = target;
+            Size = size;
+        }
+    }
+
     public class ExpressionStatement : Statement
     {
         public ExpressionNode Expr { get; private set; }

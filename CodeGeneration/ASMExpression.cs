@@ -24,6 +24,12 @@ namespace Simp.CodeGeneration
                 case Assign a:
                     GenAssign(a);
                     break;
+                case ArrayIndex x:
+                    GenArrayIndex(x);
+                    break;
+                case ArrayAssign g:
+                    GenArrayAssign(g);
+                    break;
             }
         }
 
@@ -46,6 +52,11 @@ namespace Simp.CodeGeneration
                     break;
                 case TokenType.Amp:
                     GenAddress(u.Expr);
+                    break;
+                case TokenType.At:
+                    Add("pop rax");
+                    Add("mov rax, [rax]");
+                    Add("push rax");
                     break;
                 default:
                     throw new TokenError("Unexpected operator", u.Operator);
@@ -179,13 +190,43 @@ namespace Simp.CodeGeneration
                 }
 
                 var offset = slot * 8;
-                Add($"lea rax, [ebp-{offset}]");
+                Add($"lea rax, [rbp-{offset}]");
                 Add("push rax");
             }
             else
             {
                 throw new TokenError("Can't take reference to expression.", e.SourceStart);
             }
+        }
+
+        void GenArrayIndex(ArrayIndex x)
+        {
+            GenExpression(x.CallSite);
+            GenExpression(x.Index);
+            Add("pop rbx"); // Index
+            Add("pop rax"); // Pointer
+            Add("mov rax, [rax+rbx*8]");
+            Add("push rax");
+        }
+
+        void GenArrayAddress(ArrayIndex x)
+        {
+            GenExpression(x.CallSite);
+            GenExpression(x.Index);
+            Add("pop rbx"); // Index
+            Add("pop rax"); // Pointer
+            Add("lea rax, [rax+rbx*8]");
+            Add("push rax");
+        }
+
+        void GenArrayAssign(ArrayAssign g)
+        {
+            GenExpression(g.Value);
+            GenArrayAddress(g.Target as ArrayIndex);
+            Add("pop rax"); // Pointer
+            Add("pop rbx"); // Value
+            Add("mov [rax], rbx");
+            Add("push rbx");
         }
     }
 }

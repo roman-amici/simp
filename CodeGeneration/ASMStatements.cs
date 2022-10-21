@@ -39,6 +39,9 @@ namespace Simp.CodeGeneration
                 case ForStatement f:
                     GenForStatement(f);
                     break;
+                case ArrayDeclaration a:
+                    GenArrayDeclaration(a);
+                    break;
             }
         }
 
@@ -134,6 +137,17 @@ namespace Simp.CodeGeneration
             Add($"jmp {predicateStart}");
             Resolver.ExitScope();
             AddLabel(forEnd);
+        }
+
+        void GenArrayDeclaration(ArrayDeclaration a)
+        {
+            var (variableSlot, arrayStart) = Resolver.DeclareArray(a.Target.QualifiedName, a.Size);
+
+            var variableOffset = variableSlot * 8;
+            var arrayStartOffset = arrayStart * 8;
+            Add($"mov rax, rbp");
+            Add($"add rax, -{arrayStartOffset}");
+            Add($"mov [rbp-{variableOffset}], rax");
         }
     }
 }

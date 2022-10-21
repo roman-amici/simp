@@ -77,17 +77,29 @@ namespace Simp.Parser
             return new IfStatement(ifToken, predicate, block, elseStatement);
         }
 
-        public LetStatement LetStatement()
+        public Statement LetStatement()
         {
             var letToken = Consume(TokenType.Let, "Expected 'let'.");
             var name = Consume(TokenType.Identifier, "Expected identifier after 'let'.");
 
-            Consume(TokenType.Equal, "Expected '=' after identifier.");
-            var initializer = Expr();
+            if (Match(TokenType.LeftBracket))
+            {
+                var sizeToken = Consume(TokenType.IntLiteral, "Expected array size after '['.");
+                var size = int.Parse(sizeToken.Literal);
 
-            Consume(TokenType.Semicolon, "Expected ';'.");
+                Consume(TokenType.RightBracket, "Expected ']'.");
+                Consume(TokenType.Semicolon, "Expected ';'");
+                return new ArrayDeclaration(letToken, new Name(name.Literal), size);
+            }
+            else
+            {
+                Consume(TokenType.Equal, "Expected '=' after identifier.");
+                var initializer = Expr();
 
-            return new LetStatement(letToken, new Name(name.Literal), initializer);
+                Consume(TokenType.Semicolon, "Expected ';'.");
+
+                return new LetStatement(letToken, new Name(name.Literal), initializer);
+            }
         }
 
         public WhileStatement WhileStatement()
