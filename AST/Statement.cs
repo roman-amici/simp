@@ -146,10 +146,10 @@ namespace Simp.AST
 
     public class ReturnStatement : Statement
     {
-        public ExpressionNode Expr { get; private set; }
+        public ExpressionNode? Expr { get; private set; }
         public ReturnStatement(
             Token sourceStart,
-            ExpressionNode expr
+            ExpressionNode? expr
         ) : base(sourceStart)
         {
             Expr = expr;

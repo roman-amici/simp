@@ -30,6 +30,9 @@ namespace Simp.CodeGeneration
                 case ArrayAssign g:
                     GenArrayAssign(g);
                     break;
+                case Call c:
+                    GenFunctionCall(c);
+                    break;
             }
         }
 
@@ -153,45 +156,80 @@ namespace Simp.CodeGeneration
 
         void GenVariable(Variable v)
         {
-            var slot = Resolver.FindSlot(v.Name.QualifiedName);
-            if (slot == null)
+            var name = v.Name.QualifiedName;
+
+            var slot = Resolver.FindSlot(name);
+            if (slot != null)
+            {
+                var offset = slot * 8;
+                Add($"mov rax, [rbp-{offset}]");
+                Add($"push rax");
+            }
+            else if (
+                GlobalResolver.ContainsKey(name) &&
+                GlobalResolver[name] is FunctionDeclaration)
+            {
+                Add($"lea rax, [rel {name}]");
+                Add("push rax");
+            } // TODO: Globals
+            else
             {
                 throw new TokenError($"Reference to undeclared variable '{v.Name.QualifiedName}'", v.SourceStart);
             }
-
-            var offset = slot * 8;
-            Add($"mov rax, [rbp-{offset}]");
-            Add($"push rax");
         }
 
         void GenAssign(Assign a)
         {
-            var variable = a.Target as Variable;
-            var slot = Resolver.FindSlot(variable.Name.QualifiedName);
-            if (slot == null)
+            var variable = (Variable)a.Target;
+            var name = variable.Name.QualifiedName;
+            var slot = Resolver.FindSlot(name);
+            if (slot != null)
             {
-                throw new TokenError($"Assignment to undeclared variable '{variable.Name.QualifiedName}'", a.SourceStart);
+                var offset = slot * 8;
+                GenExpression(a.Value);
+                Add("mov rax, [rsp]");
+                Add($"mov [rbp-{offset}], rax");
+            }
+            else if (
+                GlobalResolver.ContainsKey(name) &&
+                GlobalResolver[name] is FunctionDeclaration)
+            {
+                throw new TokenError("Assignment to function is not allowed.", a.SourceStart);
+            } // TODO: Globals
+            else
+            {
+                throw new TokenError($"Assignment to undeclared variable '{name}'", a.SourceStart);
             }
 
-            var offset = slot * 8;
-            GenExpression(a.Value);
-            Add("mov rax, [rsp]");
-            Add($"mov [rbp-{offset}], rax");
+
         }
 
         void GenAddress(ExpressionNode e)
         {
             if (e is Variable v)
             {
-                var slot = Resolver.FindSlot(v.Name.QualifiedName);
-                if (slot == null)
+                var name = v.Name.QualifiedName;
+                var slot = Resolver.FindSlot(name);
+                if (slot != null)
                 {
-                    throw new TokenError($"Reference to undeclared variable '{v.Name.QualifiedName}'", v.SourceStart);
+                    var offset = slot * 8;
+                    Add($"lea rax, [rbp-{offset}]");
+                    Add("push rax");
                 }
-
-                var offset = slot * 8;
-                Add($"lea rax, [rbp-{offset}]");
-                Add("push rax");
+                else if (
+                    GlobalResolver.ContainsKey(name) &&
+                    GlobalResolver[name] is FunctionDeclaration)
+                {
+                    throw new TokenError($"Cannot take a reference to a function pointer.", v.SourceStart);
+                }
+                else
+                {
+                    throw new TokenError($"Reference to undeclared variable '{name}'", v.SourceStart);
+                }
+            }
+            else if (e is ArrayIndex a)
+            {
+                GenArrayAddress(a);
             }
             else
             {
@@ -222,11 +260,29 @@ namespace Simp.CodeGeneration
         void GenArrayAssign(ArrayAssign g)
         {
             GenExpression(g.Value);
-            GenArrayAddress(g.Target as ArrayIndex);
+            GenArrayAddress((ArrayIndex)g.Target);
             Add("pop rax"); // Pointer
             Add("pop rbx"); // Value
             Add("mov [rax], rbx");
             Add("push rbx");
+        }
+
+        void GenFunctionCall(Call c)
+        {
+            // Add in reverse order
+            foreach (var argument in c.ArgumentList.Reverse())
+            {
+                GenExpression(argument);
+            }
+
+            GenExpression(c.Callee);
+            Add("pop rax");
+            Add("call rax");
+
+            var argumentOffset = c.ArgumentList.Count * 8;
+            Add($"add rsp, {argumentOffset}");
+
+            Add("push rax"); // Push the return value
         }
     }
 }

@@ -42,6 +42,9 @@ namespace Simp.CodeGeneration
                 case ArrayDeclaration a:
                     GenArrayDeclaration(a);
                     break;
+                case ReturnStatement r:
+                    GenReturnStatement(r);
+                    break;
             }
         }
 
@@ -148,6 +151,17 @@ namespace Simp.CodeGeneration
             Add($"mov rax, rbp");
             Add($"add rax, -{arrayStartOffset}");
             Add($"mov [rbp-{variableOffset}], rax");
+        }
+
+        void GenReturnStatement(ReturnStatement r)
+        {
+            if (r.Expr is not null)
+            {
+                GenExpression(r.Expr);
+                Add("pop rax");
+            }
+
+            Add($"jmp {FunctionReturnLabel}");
         }
     }
 }

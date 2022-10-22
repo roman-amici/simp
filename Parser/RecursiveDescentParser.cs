@@ -69,24 +69,24 @@ namespace Simp.Parser
             Tokens = tokens;
         }
 
-        public IList<Statement> Parse()
+        public IList<Declaration> Parse()
         {
-            List<Statement> statements = new List<Statement>();
+            List<Declaration> declarations = new List<Declaration>();
             while (!IsAtEnd())
             {
                 try
                 {
-                    statements.Add(ParseStatement());
+                    declarations.Add(ParseDeclaration());
                 }
                 catch (TokenError e)
                 {
                     Console.WriteLine(e.ToString());
                     // TODO: Synchronization
-                    return statements;
+                    return declarations;
                 }
             }
 
-            return statements;
+            return declarations;
         }
     }
 }

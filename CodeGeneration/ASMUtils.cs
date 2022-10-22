@@ -17,7 +17,7 @@ namespace Simp.CodeGeneration
 
         void Add(string value)
         {
-            CurrentFunction.Add(value);
+            FunctionText.Add(value);
         }
 
         void AddLabel(string value)

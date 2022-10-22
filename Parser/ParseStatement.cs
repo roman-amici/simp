@@ -15,11 +15,12 @@ namespace Simp.Parser
                 TokenType.Let => LetStatement(),
                 TokenType.While => WhileStatement(),
                 TokenType.For => ForStatement(),
+                TokenType.Return => ReturnStatement(),
                 _ => ExpressionStatement()
             };
         }
 
-        public ExitStatement ExitStatement()
+        ExitStatement ExitStatement()
         {
             var exitToken = Consume(TokenType.Exit, "Expected 'exit'.");
             var expr = Expr();
@@ -28,7 +29,7 @@ namespace Simp.Parser
             return new ExitStatement(exitToken, expr);
         }
 
-        public ExpressionStatement ExpressionStatement()
+        ExpressionStatement ExpressionStatement()
         {
             var expr = Expr();
             Consume(TokenType.Semicolon, "Expected ';'.");
@@ -36,7 +37,7 @@ namespace Simp.Parser
             return new ExpressionStatement(expr.SourceStart, expr);
         }
 
-        public BlockStatement BlockStatement()
+        BlockStatement BlockStatement()
         {
             var brace = Consume(TokenType.LeftBrace, "Expected '{'.");
 
@@ -49,7 +50,7 @@ namespace Simp.Parser
             return new BlockStatement(brace, statements);
         }
 
-        public IfStatement IfStatement()
+        IfStatement IfStatement()
         {
             var ifToken = Consume(TokenType.If, "Expected 'if'.");
 
@@ -77,7 +78,7 @@ namespace Simp.Parser
             return new IfStatement(ifToken, predicate, block, elseStatement);
         }
 
-        public Statement LetStatement()
+        Statement LetStatement()
         {
             var letToken = Consume(TokenType.Let, "Expected 'let'.");
             var name = Consume(TokenType.Identifier, "Expected identifier after 'let'.");
@@ -102,7 +103,7 @@ namespace Simp.Parser
             }
         }
 
-        public WhileStatement WhileStatement()
+        WhileStatement WhileStatement()
         {
             var whileToken = Consume(TokenType.While, "Expected 'while'.");
             Consume(TokenType.LeftParen, "Expected '(' after 'while'.");
@@ -119,7 +120,7 @@ namespace Simp.Parser
                 block);
         }
 
-        public ForStatement ForStatement()
+        ForStatement ForStatement()
         {
             var forToken = Consume(TokenType.For, "Expected 'for'.");
 
@@ -141,6 +142,20 @@ namespace Simp.Parser
                 update,
                 block
             );
+        }
+
+        ReturnStatement ReturnStatement()
+        {
+            var returnToken = Consume(TokenType.Return, "Expected 'return'.");
+
+            ExpressionNode? expr = null;
+            if (!Match(TokenType.Semicolon))
+            {
+                expr = Expr();
+                Consume(TokenType.Semicolon, "Expected ';'");
+            }
+
+            return new ReturnStatement(returnToken, expr);
         }
     }
 

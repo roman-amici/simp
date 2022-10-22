@@ -1,4 +1,5 @@
 using Simp.AST;
+using Simp.Common;
 using Simp.StaticAnalysis;
 
 namespace Simp.CodeGeneration
@@ -11,11 +12,13 @@ namespace Simp.CodeGeneration
         IList<string> BSS { get; set; }
         IList<string> Text { get; set; }
 
-        IList<string> CurrentFunction { get; set; }
+        IList<string> FunctionText { get; set; }
 
         int Label { get; set; } = 0;
 
+        Dictionary<string, Declaration> GlobalResolver { get; set; } = new Dictionary<string, Declaration>();
         Resolver Resolver { get; set; }
+        string FunctionReturnLabel { get; set; } = String.Empty;
 
         string NextLabel()
         {
@@ -30,37 +33,6 @@ namespace Simp.CodeGeneration
             SetupData();
             SetupBSS();
             SetupText();
-        }
-
-        void EnterFunction()
-        {
-            CurrentFunction = new List<string>();
-            Resolver = new Resolver();
-        }
-
-        void ExitFunction()
-        {
-            var offset = Resolver.MaxSlots * 8;
-
-            // Function preamble
-            Text.Add("push rbp");
-            Text.Add("mov rbp, rsp");
-            Text.Add($"sub rsp, ${offset}");
-
-            foreach (var line in CurrentFunction)
-            {
-                Text.Add(line);
-            }
-
-            // TODO: ret;
-        }
-
-        public void GenFunction(IList<Statement> statements)
-        {
-            // TODO: named function, arguments etc;
-            EnterFunction();
-            GenStatements(statements);
-            ExitFunction();
         }
 
         void SetupData()
@@ -79,11 +51,30 @@ namespace Simp.CodeGeneration
             {
                 "section .text",
                 "\t global main",
-                "main:"
             };
         }
 
-        public void Save()
+        public bool Generate(IList<Declaration> declarations)
+        {
+            try
+            {
+                foreach (var declaration in declarations)
+                {
+                    GenDeclaration(declaration);
+                }
+            }
+            catch (TokenError e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+
+            Save();
+            return true;
+
+        }
+
+        void Save()
         {
             using var stream = new StreamWriter(FilePath);
             foreach (var line in Data)

@@ -9,16 +9,19 @@ namespace Simp.AST
 
     public class FunctionDeclaration : Declaration
     {
-        public Token FunctionName { get; private set; }
+        public string FunctionName { get; private set; }
         public BlockStatement Body { get; private set; }
+        public IList<string> ArgumentList { get; private set; }
 
         public FunctionDeclaration(
             Token sourceStart,
-            Token functionName,
+            string functionName,
+            IList<string> argumentList,
             BlockStatement body
         ) : base(sourceStart)
         {
             FunctionName = functionName;
+            ArgumentList = argumentList;
             Body = body;
         }
     }

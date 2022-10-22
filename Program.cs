@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using Simp.CodeGeneration;
 using Simp.Parser;
 using Simp.Scanner;
@@ -12,6 +13,12 @@ if (args.Length < 1)
 
 var filename = args[0];
 
+string asmFile = null;
+if (args.Length > 1)
+{
+    asmFile = args[1];
+}
+
 var contents = File.ReadAllText(filename);
 
 var scanner = new BasicScanner();
@@ -20,12 +27,60 @@ var tokens = scanner.ScanFile(contents, filename);
 if (scanner.IsValid)
 {
     var parser = new RecursiveDescentParser(tokens);
-    var statements = parser.Parse();
+    var declarations = parser.Parse();
     if (parser.IsValid)
     {
-        var generator = new ASMGenerator($"example_asm/test.asm");
-        generator.GenFunction(statements);
-        generator.Save();
+        asmFile ??= Path.GetTempFileName();
+        var generator = new ASMGenerator(asmFile);
+        if (!generator.Generate(declarations))
+        {
+            Environment.Exit(3);
+        }
+
+        var listFile = Path.GetTempFileName();
+        var outFile = Path.GetTempFileName();
+        var proc = Process.Start(
+            new ProcessStartInfo()
+            {
+                FileName = "nasm",
+                Arguments = $"-f elf64 -g -F dwarf {asmFile} -l {listFile} -o {outFile}",
+                RedirectStandardOutput = true,
+            });
+
+        proc?.WaitForExit();
+        if (proc?.ExitCode != 0)
+        {
+            Console.WriteLine("An error occurred generating assembly");
+            Environment.Exit(1);
+        }
+
+        var outputFile = Path.GetTempFileName();
+        proc = Process.Start(
+            new ProcessStartInfo()
+            {
+                FileName = "gcc",
+                Arguments = $"-o {outputFile} {outFile} -no-pie",
+                RedirectStandardOutput = true
+            }
+        );
+
+        proc?.WaitForExit();
+        if (proc?.ExitCode != 0)
+        {
+            Console.WriteLine("An error occurred linking program");
+            Environment.Exit(2);
+        }
+
+        proc = Process.Start(
+            new ProcessStartInfo()
+            {
+                FileName = outputFile,
+                RedirectStandardOutput = true
+            }
+        );
+
+        proc?.WaitForExit();
+        Console.WriteLine($"Code: {proc?.ExitCode}");
     }
 }
 
