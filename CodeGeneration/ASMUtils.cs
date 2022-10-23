@@ -24,5 +24,17 @@ namespace Simp.CodeGeneration
         {
             Add($"{value}:");
         }
+
+        void Pop(string register)
+        {
+            if (FunctionText[^1] == $"push {register}")
+            {
+                FunctionText.RemoveAt(FunctionText.Count - 1);
+            }
+            else
+            {
+                Add($"pop {register}");
+            }
+        }
     }
 }

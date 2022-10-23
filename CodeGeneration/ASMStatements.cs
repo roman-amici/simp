@@ -19,7 +19,7 @@ namespace Simp.CodeGeneration
             {
                 case ExpressionStatement e:
                     GenExpression(e.Expr);
-                    Add("pop rax"); // Keep the stack normalized
+                    Pop("rax"); // Keep the stack normalized
                     break;
                 case ExitStatement ex:
                     GenExitStatement(ex);
@@ -52,7 +52,7 @@ namespace Simp.CodeGeneration
         {
             GenExpression(ex.Expr);
             Add("mov rax, 60"); // Exit syscall code
-            Add("pop rdi");
+            Pop("rdi");
             Add("syscall");
         }
 
@@ -73,7 +73,7 @@ namespace Simp.CodeGeneration
             if (i.Predicate != null)
             {
                 GenExpression(i.Predicate);
-                Add("pop rax");
+                Pop("rax");
                 Add("cmp rax, 0");
                 Add($"je {nextJump}");
             }
@@ -115,7 +115,7 @@ namespace Simp.CodeGeneration
 
             AddLabel(predicateStart);
             GenExpression(w.Predicate);
-            Add("pop rax");
+            Pop("rax");
             Add("cmp rax, 0");
             Add($"je {whileEnd}");
             GenBlockStatement(w.Block);
@@ -132,7 +132,7 @@ namespace Simp.CodeGeneration
             GenStatement(f.Initializer);
             AddLabel(predicateStart);
             GenExpression(f.Predicate);
-            Add("pop rax");
+            Pop("rax");
             Add("cmp rax, 0");
             Add($"je {forEnd}");
             GenBlockStatement(f.Block);
@@ -158,7 +158,7 @@ namespace Simp.CodeGeneration
             if (r.Expr is not null)
             {
                 GenExpression(r.Expr);
-                Add("pop rax");
+                Pop("rax");
             }
 
             Add($"jmp {FunctionReturnLabel}");

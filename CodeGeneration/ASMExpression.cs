@@ -42,12 +42,12 @@ namespace Simp.CodeGeneration
             switch (u.Operator.Type)
             {
                 case TokenType.Minus:
-                    Add("pop rax");
+                    Pop("rax");
                     Add("neg rax");
                     Add("push rax");
                     break;
                 case TokenType.Bang:
-                    Add("pop rax");
+                    Pop("rax");
                     Add("xor rbx, rbx");
                     Add("cmp rax, 0");
                     Add("setz bl");
@@ -57,7 +57,7 @@ namespace Simp.CodeGeneration
                     GenAddress(u.Expr);
                     break;
                 case TokenType.At:
-                    Add("pop rax");
+                    Pop("rax");
                     Add("mov rax, [rax]");
                     Add("push rax");
                     break;
@@ -78,8 +78,8 @@ namespace Simp.CodeGeneration
             GenExpression(b.Left);
             GenExpression(b.Right);
 
-            Add("pop rbx");
-            Add("pop rax");
+            Pop("rbx");
+            Pop("rax");
 
             switch (b.Operator.Type)
             {
@@ -142,7 +142,7 @@ namespace Simp.CodeGeneration
 
             // Fall through to expression 2
             // Remove the old value from the stack since its irrelevant if we fall through;
-            Add("pop rax");
+            Pop("rax");
 
             GenExpression(b.Right);
             Add($"{skipLabel}:");
@@ -241,8 +241,8 @@ namespace Simp.CodeGeneration
         {
             GenExpression(x.CallSite);
             GenExpression(x.Index);
-            Add("pop rbx"); // Index
-            Add("pop rax"); // Pointer
+            Pop("rbx"); // Index
+            Pop("rax"); // Pointer
             Add("mov rax, [rax+rbx*8]");
             Add("push rax");
         }
@@ -251,8 +251,8 @@ namespace Simp.CodeGeneration
         {
             GenExpression(x.CallSite);
             GenExpression(x.Index);
-            Add("pop rbx"); // Index
-            Add("pop rax"); // Pointer
+            Pop("rbx"); // Index
+            Pop("rax"); // Pointer
             Add("lea rax, [rax+rbx*8]");
             Add("push rax");
         }
@@ -261,8 +261,8 @@ namespace Simp.CodeGeneration
         {
             GenExpression(g.Value);
             GenArrayAddress((ArrayIndex)g.Target);
-            Add("pop rax"); // Pointer
-            Add("pop rbx"); // Value
+            Pop("rax"); // Pointer
+            Pop("rbx"); // Value
             Add("mov [rax], rbx");
             Add("push rbx");
         }
@@ -276,7 +276,7 @@ namespace Simp.CodeGeneration
             }
 
             GenExpression(c.Callee);
-            Add("pop rax");
+            Pop("rax");
             Add("call rax");
 
             var argumentOffset = c.ArgumentList.Count * 8;
