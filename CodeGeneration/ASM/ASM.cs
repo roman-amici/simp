@@ -2,7 +2,7 @@ using Simp.AST;
 using Simp.Common;
 using Simp.StaticAnalysis;
 
-namespace Simp.CodeGeneration
+namespace Simp.CodeGeneration.ASM
 {
     public partial class ASMGenerator
     {

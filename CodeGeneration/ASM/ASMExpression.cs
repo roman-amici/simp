@@ -1,7 +1,7 @@
 using Simp.AST;
 using Simp.Common;
 
-namespace Simp.CodeGeneration
+namespace Simp.CodeGeneration.ASM
 {
     public partial class ASMGenerator
     {

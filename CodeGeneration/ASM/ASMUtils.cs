@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Simp.CodeGeneration
+namespace Simp.CodeGeneration.ASM
 {
     public partial class ASMGenerator
     {
