@@ -19,6 +19,16 @@ namespace Simp.CodeGeneration.LLVM
         }
     }
 
+    public class I1 : DataType
+    {
+        public static readonly I1 Instance = new();
+
+        public override string Generate()
+        {
+            return "i1";
+        }
+    }
+
     public class Pointer : DataType
     {
         public static readonly Pointer Int64Ptr = new(Int64.Instance);

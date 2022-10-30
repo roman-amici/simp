@@ -61,11 +61,31 @@ void RunASM(IList<Declaration> declarations, string asmFile)
     Console.WriteLine($"Code: {proc?.ExitCode}");
 }
 
-void RunLLVM(IList<Declaration> declarations, string llvmFile)
+void RunLLVM(IList<Declaration> declarations, string? llvmFile)
 {
     var builder = new Simp.CodeGeneration.LLVM.Builder();
     builder.Build(declarations);
-    builder.Generate(llvmFile);
+
+    if (llvmFile == null)
+    {
+        var process = Process.Start(
+            new ProcessStartInfo()
+            {
+                FileName = "lli",
+                RedirectStandardInput = true
+            }
+        );
+        builder.Generate(process.StandardInput);
+
+        process.StandardInput.Close();
+        process.WaitForExit();
+        Console.WriteLine(process?.ExitCode);
+    }
+    else
+    {
+        builder.Generate(llvmFile);
+    }
+
 }
 
 if (args.Length < 1)

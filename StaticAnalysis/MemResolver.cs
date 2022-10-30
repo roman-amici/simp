@@ -28,7 +28,7 @@ namespace Simp.StaticAnalysis
                 return null;
             }
 
-            CurrentScope[variable] = $"%{variable}{VariableIndex++}";
+            CurrentScope[variable] = $"%v{variable}{VariableIndex++}";
             return CurrentScope[variable];
         }
 

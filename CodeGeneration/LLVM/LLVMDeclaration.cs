@@ -20,6 +20,7 @@ namespace Simp.CodeGeneration.LLVM
 
         void BuildFunction(FunctionDeclaration f)
         {
+            TempReg = 0;
             CurrentFunction = new Function(
                 f.FunctionName,
                 Int64.Instance,
@@ -40,7 +41,7 @@ namespace Simp.CodeGeneration.LLVM
             BuildBlock(f.Body);
             Resolver.ExitScope();
 
-            if (CurrentLabel.Ops[^1] is not Ret)
+            if (CurrentLabel.Ops.Count == 0 || CurrentLabel.Ops[^1] is not Ret)
             {
                 CurrentLabel.Add(new Ret(Int64.Instance, "0"));
             }

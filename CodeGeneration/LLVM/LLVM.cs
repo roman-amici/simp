@@ -13,6 +13,9 @@ namespace Simp.CodeGeneration.LLVM
 
         MemResolver Resolver { get; set; }
 
+        int TempReg { get; set; }
+        int LabelIndex { get; set; }
+
         public bool Build(IList<Declaration> declarations)
         {
             try
@@ -34,6 +37,14 @@ namespace Simp.CodeGeneration.LLVM
         public void Generate(string fileName)
         {
             using var stream = new StreamWriter(fileName);
+            foreach (var declaration in Declarations)
+            {
+                declaration.Generate(stream);
+            }
+        }
+
+        public void Generate(StreamWriter stream)
+        {
             foreach (var declaration in Declarations)
             {
                 declaration.Generate(stream);
