@@ -2,6 +2,7 @@ namespace Simp.CodeGeneration.LLVM
 {
     public abstract class LLVMOp
     {
+        public abstract void Generate(StreamWriter writer);
     }
 
     public class Label : LLVMOp
@@ -19,22 +20,55 @@ namespace Simp.CodeGeneration.LLVM
         {
             Ops.Add(op);
         }
+
+        public override void Generate(StreamWriter writer)
+        {
+            writer.WriteLine($"{Tag}:");
+            foreach (var op in Ops)
+            {
+                op.Generate(writer);
+            }
+        }
     }
 
-    public class Function : LLVMOp
+    public abstract class LLVMDeclaration : LLVMOp
+    {
+
+    }
+
+    public class Function : LLVMDeclaration
     {
         public List<Label> Labels { get; private set; } = new List<Label>();
         public DataType ReturnType { get; private set; }
         public IList<DataType> Arguments { get; private set; }
+        public string Name { get; private set; }
 
-        public Function(DataType returnType, IList<DataType> arguments)
+        public Function(
+            string name,
+            DataType returnType,
+            IList<DataType> arguments)
         {
+            Name = name;
             ReturnType = returnType;
             Arguments = arguments;
         }
+
+        public override void Generate(StreamWriter writer)
+        {
+            var argumentList = string.Join(
+                ',', Arguments.Select(d => d.Generate()));
+            writer.WriteLine($"define {ReturnType} @{Name}({argumentList}) {{");
+
+            foreach (var label in Labels)
+            {
+                label.Generate(writer);
+            }
+
+            writer.WriteLine("}");
+        }
     }
 
-    public abstract class RegOp
+    public abstract class RegOp : LLVMOp
     {
         public string Reg1 { get; private set; }
         public string Reg2 { get; private set; }
@@ -54,16 +88,21 @@ namespace Simp.CodeGeneration.LLVM
         }
     }
 
-    public class Branch
+    public class Branch : LLVMOp
     {
         public string Tag { get; private set; }
         public Branch(string tag)
         {
             Tag = tag;
         }
+
+        public override void Generate(StreamWriter writer)
+        {
+            writer.WriteLine($"br label %{Tag}");
+        }
     }
 
-    public class Ret
+    public class Ret : LLVMOp
     {
         public DataType ReturnType { get; private set; }
         public string RegName { get; private set; }
@@ -71,6 +110,11 @@ namespace Simp.CodeGeneration.LLVM
         {
             ReturnType = returnType;
             RegName = reg;
+        }
+
+        public override void Generate(StreamWriter writer)
+        {
+            writer.WriteLine($"ret {ReturnType.Generate()} {RegName}");
         }
     }
 }

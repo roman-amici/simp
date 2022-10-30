@@ -2,23 +2,37 @@ namespace Simp.CodeGeneration.LLVM
 {
     public abstract class DataType
     {
-
+        public override string ToString()
+        {
+            return Generate();
+        }
+        public abstract string Generate();
     }
 
-    public class Int64
+    public class Int64 : DataType
     {
         public static readonly Int64 Instance = new();
+
+        public override string Generate()
+        {
+            return "i64";
+        }
     }
 
-    public class Pointer<T>
+    public class Pointer : DataType
     {
-        public static readonly Pointer<Int64> Int64Ptr = new(Int64.Instance);
+        public static readonly Pointer Int64Ptr = new(Int64.Instance);
 
-        public Pointer(T type)
+        public Pointer(DataType type)
         {
             BaseType = type;
         }
 
-        public T BaseType { get; set; }
+        public DataType BaseType { get; set; }
+
+        public override string Generate()
+        {
+            return $"{BaseType.Generate()}*";
+        }
     }
 }
