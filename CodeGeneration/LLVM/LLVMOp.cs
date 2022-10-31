@@ -249,4 +249,71 @@ namespace Simp.CodeGeneration.LLVM
             writer.WriteLine($"ret {ReturnType.Generate()} {RegName}");
         }
     }
+
+    public class Alloc : LLVMOp
+    {
+        public DataType BaseType { get; private set; }
+        public string Variable { get; private set; }
+
+        public Alloc(DataType baseType, string variable)
+        {
+            BaseType = baseType;
+            Variable = variable;
+        }
+
+        public override void Generate(StreamWriter writer)
+        {
+            writer.WriteLine($"{Variable} = alloca {BaseType}");
+        }
+    }
+
+    public class Load : LLVMOp
+    {
+        public DataType DerefType { get; private set; }
+        public DataType PointerType { get; private set; }
+        public string TargetReg { get; private set; }
+        public string PointerReg { get; private set; }
+
+        public Load(
+            DataType pointerType,
+            string pointerReg,
+            DataType derefType,
+            string targetReg)
+        {
+            DerefType = derefType;
+            PointerType = pointerType;
+            TargetReg = targetReg;
+            PointerReg = pointerReg;
+        }
+
+        public override void Generate(StreamWriter writer)
+        {
+            writer.WriteLine($"{TargetReg} = load {DerefType}, {PointerType} {PointerReg}");
+        }
+    }
+
+    public class Store : LLVMOp
+    {
+        public DataType RefType { get; private set; }
+        public DataType PointerType { get; private set; }
+        public string PointerReg { get; private set; }
+        public string SourceReg { get; private set; }
+
+        public Store(
+            DataType refType,
+            string sourceReg,
+            DataType pointerType,
+            string pointerReg)
+        {
+            RefType = refType;
+            PointerType = pointerType;
+            SourceReg = sourceReg;
+            PointerReg = pointerReg;
+        }
+
+        public override void Generate(StreamWriter writer)
+        {
+            writer.WriteLine($"store {RefType} {SourceReg}, {PointerType} {PointerReg}");
+        }
+    }
 }

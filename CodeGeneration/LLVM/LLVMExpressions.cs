@@ -11,6 +11,8 @@ namespace Simp.CodeGeneration.LLVM
             {
                 IntLiteral i => BuildIntLiteral(i),
                 Binary b => BuildBinary(b),
+                Variable v => BuildVariable(v),
+                Assign a => BuildAssign(a),
                 _ => throw new NotImplementedException()
             };
         }
@@ -90,6 +92,46 @@ namespace Simp.CodeGeneration.LLVM
             };
 
             return reg3;
+        }
+
+        string BuildVariable(Variable v)
+        {
+            var variable = Resolver.Lookup(v.Name.QualifiedName);
+            if (variable == null)
+            {
+                throw new TokenError($"Reference to undefined variable {v.Name.QualifiedName}", v.SourceStart);
+            }
+
+            var value = NextTemp();
+            CurrentLabel.Add(
+                new Load(
+                    Pointer.Int64Ptr,
+                    variable,
+                    Int64.Instance,
+                    value)
+            );
+
+            return value;
+        }
+
+        string BuildAssign(Assign a)
+        {
+            var v = a.Target as Variable;
+            var variable = Resolver.Lookup(v.Name.QualifiedName);
+            if (variable == null)
+            {
+                throw new TokenError($"Reference to undefined variable {v.Name.QualifiedName}", v.SourceStart);
+            }
+
+            var expr = BuildExpression(a.Value);
+            CurrentLabel.Add(new Store(
+                Int64.Instance,
+                expr,
+                Pointer.Int64Ptr,
+                variable
+            ));
+
+            return expr;
         }
     }
 }

@@ -1,4 +1,5 @@
 using Simp.AST;
+using Simp.Common;
 
 namespace Simp.CodeGeneration.LLVM
 {
@@ -24,6 +25,15 @@ namespace Simp.CodeGeneration.LLVM
                     break;
                 case IfStatement i:
                     BuildIf(i, null);
+                    break;
+                case WhileStatement w:
+                    BuildWhile(w);
+                    break;
+                case LetStatement l:
+                    BuildLet(l);
+                    break;
+                case ExpressionStatement e:
+                    BuildExpression(e.Expr);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -89,6 +99,51 @@ namespace Simp.CodeGeneration.LLVM
                 BuildBlock(i.ThenBlock);
                 EnterLabel(branchEnd);
             }
+        }
+
+        void BuildWhile(WhileStatement w)
+        {
+            var comparison = NextLabel();
+            var endWhile = NextLabel();
+            var whileBody = NextLabel();
+
+            BranchAndEnter(comparison);
+            var reg = BuildExpression(w.Predicate);
+            var boolReg = CastToI1(reg);
+
+            CurrentLabel.Add(new ConditionalBranch(
+                boolReg,
+                I1.Instance,
+                whileBody.Tag,
+                endWhile.Tag
+            ));
+
+            EnterLabel(whileBody);
+            BuildBlock(w.Block);
+
+            CurrentLabel.Add(new Branch(comparison.Tag));
+
+            EnterLabel(endWhile);
+        }
+
+        void BuildLet(LetStatement l)
+        {
+            var variable = Resolver.DeclareVariable(l.Target.QualifiedName);
+            if (variable == null)
+            {
+                throw new TokenError($"Variable '{l.Target.QualifiedName}' already declared.", l.SourceStart);
+            }
+
+            CurrentLabel.Add(new Alloc(Int64.Instance, variable));
+
+            var expr = BuildExpression(l.Initializer);
+
+            CurrentLabel.Add(new Store(
+                Int64.Instance,
+                expr,
+                Pointer.Int64Ptr,
+                variable
+            ));
         }
     }
 }
