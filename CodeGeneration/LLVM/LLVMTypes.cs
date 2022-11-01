@@ -32,6 +32,7 @@ namespace Simp.CodeGeneration.LLVM
     public class Pointer : DataType
     {
         public static readonly Pointer Int64Ptr = new(Int64.Instance);
+        public static readonly Pointer BoolPtr = new(I1.Instance);
 
         public Pointer(DataType type)
         {

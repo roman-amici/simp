@@ -94,7 +94,8 @@ namespace Simp.CodeGeneration.LLVM
             add,
             sub,
             mul,
-            sdiv
+            sdiv,
+            xor
         }
 
         public Operator Op { get; private set; }

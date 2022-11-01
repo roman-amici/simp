@@ -41,6 +41,20 @@ namespace Simp.CodeGeneration.LLVM
             return boolRegister;
         }
 
+        string I1ToInt64(string register)
+        {
+            var intRegister = NextTemp();
+            CurrentLabel.Add(new Extension(
+                register,
+                intRegister,
+                I1.Instance,
+                Int64.Instance,
+                Extension.ExtensionType.zext
+            ));
+
+            return intRegister;
+        }
+
         string DeclareVariable(string name, Token t)
         {
             var variable = Resolver.DeclareVariable(name);

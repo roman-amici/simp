@@ -55,8 +55,85 @@ namespace Simp.CodeGeneration.LLVM
             return cast;
         }
 
+        string BuildBinaryShortCircuit(Binary b)
+        {
+
+            var shortCircuitLabel = NextLabel();
+            var nextExprLabel = NextLabel();
+
+            var reg1Int = BuildExpression(b.Left);
+            var reg1Bool = CastToI1(reg1Int);
+
+            var returnPointer = NextTemp();
+            CurrentLabel.Add(new Alloc(I1.Instance, returnPointer));
+
+            if (b.Operator.Type == TokenType.AmpAmp)
+            {
+                var target = NextTemp();
+                CurrentLabel.Add(
+                    new MathOp(
+                        reg1Bool,
+                        "1",
+                        target,
+                        I1.Instance,
+                        MathOp.Operator.xor
+                    )
+                );
+
+                reg1Bool = target;
+            }
+
+            CurrentLabel.Add(new Store(
+                I1.Instance,
+                reg1Bool,
+                Pointer.BoolPtr,
+                returnPointer
+            ));
+
+            CurrentLabel.Add(
+                new ConditionalBranch(
+                    reg1Bool,
+                    I1.Instance,
+                    shortCircuitLabel.Tag,
+                    nextExprLabel.Tag
+                )
+            );
+
+            EnterLabel(nextExprLabel);
+            var reg2Int = BuildExpression(b.Right);
+            var reg2Bool = CastToI1(reg2Int);
+
+            CurrentLabel.Add(
+                new Store(
+                    I1.Instance,
+                    reg2Bool,
+                    Pointer.BoolPtr,
+                    returnPointer
+                )
+            );
+
+            BranchAndEnter(shortCircuitLabel);
+
+            var returnRegBool = NextTemp();
+
+            CurrentLabel.Add(new Load(
+                Pointer.BoolPtr,
+                returnPointer,
+                I1.Instance,
+                returnRegBool
+            ));
+
+            return I1ToInt64(returnRegBool);
+        }
+
         string BuildBinary(Binary b)
         {
+            if (b.Operator.Type == TokenType.AmpAmp ||
+                b.Operator.Type == TokenType.BarBar)
+            {
+                return BuildBinaryShortCircuit(b);
+            }
+
             var reg1 = BuildExpression(b.Left);
             var reg2 = BuildExpression(b.Right);
             var reg3 = NextTemp();
