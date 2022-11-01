@@ -14,8 +14,42 @@ namespace Simp.CodeGeneration.LLVM
                 Variable v => BuildVariable(v),
                 Assign a => BuildAssign(a),
                 Call c => BuildCall(c),
+                Unary u => BuildUnary(u),
                 _ => throw new NotImplementedException()
             };
+        }
+
+        string BuildUnary(Unary u)
+        {
+
+            var expr = BuildExpression(u.Expr);
+            var result = NextTemp();
+            switch (u.Operator.Type)
+            {
+                case TokenType.Minus:
+                    CurrentLabel.Add(new MathOp(
+                        "0",
+                        expr,
+                        result,
+                        Int64.Instance,
+                        MathOp.Operator.sub
+                    ));
+                    break;
+                case TokenType.Bang:
+                    var regBool = CastToI1(expr);
+                    var resultBool = NextTemp();
+                    CurrentLabel.Add(new MathOp(
+                        "1",
+                        regBool,
+                        resultBool,
+                        I1.Instance,
+                        MathOp.Operator.xor
+                    ));
+                    result = I1ToInt64(resultBool);
+                    break;
+            }
+
+            return result;
         }
 
         string BuildIntLiteral(IntLiteral i)

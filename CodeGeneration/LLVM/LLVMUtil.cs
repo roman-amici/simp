@@ -30,12 +30,12 @@ namespace Simp.CodeGeneration.LLVM
         string CastToI1(string register)
         {
             var boolRegister = NextTemp();
-            CurrentLabel.Add(new Extension(
+            CurrentLabel.Add(new Comp(
+                "0",
                 register,
                 boolRegister,
                 Int64.Instance,
-                I1.Instance,
-                Extension.ExtensionType.trunc
+                Comp.Condition.ne
             ));
 
             return boolRegister;
