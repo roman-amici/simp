@@ -18,36 +18,58 @@ namespace Simp.CodeGeneration.LLVM
             }
         }
 
+        void EnterFunction(Function fn)
+        {
+            GlobalVariables.Add(fn.Name, $"@{fn.Name}");
+            TempReg = 0;
+            Resolver = new MemResolver();
+            Resolver.EnterScope();
+
+            CurrentFunction = fn;
+            CurrentLabel = new Label("entry");
+        }
+
+        void ExitFunction()
+        {
+            Resolver.ExitScope();
+            CurrentFunction.Labels.Add(CurrentLabel);
+            Declarations.Add(CurrentFunction);
+        }
+
         void BuildFunction(FunctionDeclaration f)
         {
-            TempReg = 0;
-            CurrentFunction = new Function(
+            var fn = new Function(
                 f.FunctionName,
                 Int64.Instance,
                 f.ArgumentList.Select((_) => Int64.Instance).ToList<DataType>());
 
-            Resolver = new MemResolver();
-            Resolver.EnterScope();
-            foreach (var argument in f.ArgumentList)
+            EnterFunction(fn);
+
+            for (var i = 0; i < f.ArgumentList.Count; i++)
             {
-                if (Resolver.DeclareFunctionArgument(argument) == null)
-                {
-                    throw new TokenError($"Argument '{argument}' already defined.", f.SourceStart);
-                }
+                var argument = f.ArgumentList[i];
+                var pointer = DeclareVariable(argument, f.SourceStart);
+
+                CurrentLabel.Add(
+                    new Alloc(Int64.Instance, pointer)
+                );
+
+                CurrentLabel.Add(new Store(
+                    Int64.Instance,
+                    $"%{i}",
+                    Pointer.Int64Ptr,
+                    pointer
+                ));
             }
 
-            CurrentLabel = new Label("entry");
-
             BuildBlock(f.Body);
-            Resolver.ExitScope();
 
             if (CurrentLabel.Ops.Count == 0 || CurrentLabel.Ops[^1] is not Ret)
             {
                 CurrentLabel.Add(new Ret(Int64.Instance, "0"));
             }
 
-            CurrentFunction.Labels.Add(CurrentLabel);
-            Declarations.Add(CurrentFunction);
+            ExitFunction();
         }
     }
 }

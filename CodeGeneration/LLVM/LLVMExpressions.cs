@@ -13,6 +13,7 @@ namespace Simp.CodeGeneration.LLVM
                 Binary b => BuildBinary(b),
                 Variable v => BuildVariable(v),
                 Assign a => BuildAssign(a),
+                Call c => BuildCall(c),
                 _ => throw new NotImplementedException()
             };
         }
@@ -96,11 +97,7 @@ namespace Simp.CodeGeneration.LLVM
 
         string BuildVariable(Variable v)
         {
-            var variable = Resolver.Lookup(v.Name.QualifiedName);
-            if (variable == null)
-            {
-                throw new TokenError($"Reference to undefined variable {v.Name.QualifiedName}", v.SourceStart);
-            }
+            var variable = LookupVariable(v);
 
             var value = NextTemp();
             CurrentLabel.Add(
@@ -117,11 +114,7 @@ namespace Simp.CodeGeneration.LLVM
         string BuildAssign(Assign a)
         {
             var v = a.Target as Variable;
-            var variable = Resolver.Lookup(v.Name.QualifiedName);
-            if (variable == null)
-            {
-                throw new TokenError($"Reference to undefined variable {v.Name.QualifiedName}", v.SourceStart);
-            }
+            var variable = LookupVariable(v);
 
             var expr = BuildExpression(a.Value);
             CurrentLabel.Add(new Store(
@@ -132,6 +125,36 @@ namespace Simp.CodeGeneration.LLVM
             ));
 
             return expr;
+        }
+
+        string BuildCall(Call c)
+        {
+            string callSite;
+            if (c.Callee is Variable v && GlobalVariables.ContainsKey(v.Name.QualifiedName))
+            {
+                callSite = GlobalVariables[v.Name.QualifiedName];
+            }
+            else
+            {
+                throw new NotImplementedException();
+                // callSite = BuildExpression(c.Callee);
+            }
+
+            var result = NextTemp();
+            var argList = c
+                .ArgumentList
+                .Select(arg => (Int64.Instance as DataType, BuildExpression(arg)))
+                .ToList();
+
+            CurrentLabel.Add(new CallFunction(
+                Int64.Instance,
+                callSite,
+                argList,
+                result
+            ));
+
+            return result;
+
         }
     }
 }

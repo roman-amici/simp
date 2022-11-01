@@ -1,3 +1,6 @@
+using Simp.AST;
+using Simp.Common;
+
 namespace Simp.CodeGeneration.LLVM
 {
     public partial class Builder
@@ -36,6 +39,41 @@ namespace Simp.CodeGeneration.LLVM
             ));
 
             return boolRegister;
+        }
+
+        string DeclareVariable(string name, Token t)
+        {
+            var variable = Resolver.DeclareVariable(name);
+            if (variable == null)
+            {
+                throw new TokenError($"Variable '{name}' already declared.", t);
+            }
+
+            return variable;
+        }
+
+        string LookupVariable(string name, Token t)
+        {
+            var variable = Resolver.Lookup(name);
+            if (variable == null)
+            {
+                if (GlobalVariables.ContainsKey(name))
+                {
+                    variable = GlobalVariables[name];
+                }
+                else
+                {
+                    throw new TokenError(
+                        $"Reference to undefined variable {name}", t);
+                }
+            }
+
+            return variable;
+        }
+
+        string LookupVariable(Variable v)
+        {
+            return LookupVariable(v.Name.QualifiedName, v.SourceStart);
         }
     }
 }

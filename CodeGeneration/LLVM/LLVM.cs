@@ -13,6 +13,8 @@ namespace Simp.CodeGeneration.LLVM
 
         MemResolver Resolver { get; set; }
 
+        Dictionary<string, string> GlobalVariables { get; set; } = new();
+
         int TempReg { get; set; }
         int LabelIndex { get; set; }
 

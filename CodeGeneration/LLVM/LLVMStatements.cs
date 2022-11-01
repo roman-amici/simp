@@ -35,6 +35,12 @@ namespace Simp.CodeGeneration.LLVM
                 case ExpressionStatement e:
                     BuildExpression(e.Expr);
                     break;
+                case ForStatement f:
+                    BuildFor(f);
+                    break;
+                case BlockStatement b:
+                    BuildBlock(b);
+                    break;
                 default:
                     throw new NotImplementedException();
             }
@@ -128,11 +134,7 @@ namespace Simp.CodeGeneration.LLVM
 
         void BuildLet(LetStatement l)
         {
-            var variable = Resolver.DeclareVariable(l.Target.QualifiedName);
-            if (variable == null)
-            {
-                throw new TokenError($"Variable '{l.Target.QualifiedName}' already declared.", l.SourceStart);
-            }
+            var variable = DeclareVariable(l.Target.QualifiedName, l.SourceStart);
 
             CurrentLabel.Add(new Alloc(Int64.Instance, variable));
 
@@ -144,6 +146,43 @@ namespace Simp.CodeGeneration.LLVM
                 Pointer.Int64Ptr,
                 variable
             ));
+        }
+
+        void BuildFor(ForStatement f)
+        {
+            Resolver.EnterScope();
+
+            BuildStatement(f.Initializer);
+
+            var testLabel = NextLabel();
+            var endFor = NextLabel();
+            var loopLabel = NextLabel();
+            BranchAndEnter(testLabel);
+
+            var intReg = BuildExpression(f.Predicate);
+            var boolReg = CastToI1(intReg);
+
+            CurrentLabel.Add(
+                new ConditionalBranch(
+                    boolReg,
+                    I1.Instance,
+                    loopLabel.Tag,
+                    endFor.Tag
+                )
+            );
+
+            EnterLabel(loopLabel);
+            BuildStatement(f.Block);
+
+            BuildExpression(f.Update);
+
+            CurrentLabel.Add(
+                new Branch(testLabel.Tag)
+            );
+
+            EnterLabel(endFor);
+
+            Resolver.ExitScope();
         }
     }
 }

@@ -316,4 +316,32 @@ namespace Simp.CodeGeneration.LLVM
             writer.WriteLine($"store {RefType} {SourceReg}, {PointerType} {PointerReg}");
         }
     }
+
+    public class CallFunction : LLVMOp
+    {
+        public DataType ReturnType { get; private set; }
+        public IList<(DataType, string)> Arguments { get; private set; }
+        public string ResultRegister { get; private set; }
+        public string FunctionName { get; private set; }
+
+        public CallFunction(
+            DataType returnType,
+            string functionName,
+            IList<(DataType, string)> arguments,
+            string resultReg)
+        {
+            FunctionName = functionName;
+            ReturnType = returnType;
+            Arguments = arguments;
+            ResultRegister = resultReg;
+        }
+
+        public override void Generate(StreamWriter writer)
+        {
+            var list = string.Join(',',
+                Arguments.Select(t => $"{t.Item1} {t.Item2}"));
+            writer.WriteLine($"{ResultRegister} = call {ReturnType} {FunctionName}({list})");
+        }
+    }
+
 }
